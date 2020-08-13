@@ -18,4 +18,55 @@ describe('StormGlass client', () => {
 
     expect(response).toEqual(stormGlassNormalized3HoursFixture);
   });
+  it('should exclude incomplete data points', async () => {
+    const lat = -33.792726;
+    const lng = 151.289824;
+
+    const incompleteResponse = {
+      hours: [
+        {
+          windDirection: {
+            noaa: 300,
+          },
+          time: '2020-04-26T00:00+00:00',
+        },
+      ],
+    };
+
+    mockedAxios.get.mockResolvedValue({ data: incompleteResponse });
+
+    const stormGlass = new StormGlass(mockedAxios);
+    const response = await stormGlass.fetchPoints(lat, lng);
+
+    expect(response).toEqual([]);
+  });
+  it('should get a generic error from stormGlass service when then request fail before reaching the service', async () => {
+    const lat = -33.792726;
+    const lng = 151.289824;
+
+    mockedAxios.get.mockRejectedValue({ message: 'Network error' });
+
+    const stormGlass = new StormGlass(mockedAxios);
+
+    await expect(stormGlass.fetchPoints(lat, lng)).rejects.toThrow(
+      'Unexpected error when trying to communicate to StormGlass: Network'
+    );
+  }),
+    it('should get an StormGlassResponseError when the StormGlass service responds with error', async () => {
+      const lat = -33.792726;
+      const lng = 151.289824;
+
+      mockedAxios.get.mockRejectedValue({
+        response: {
+          status: 429,
+          data: { errors: ['Rate limit reached'] },
+        },
+      });
+
+      const stormGlass = new StormGlass(mockedAxios);
+
+      await expect(stormGlass.fetchPoints(lat, lng)).rejects.toThrow(
+        'Unexpected error returned by the stormGlass service: Error: {"errors":["Rate limit reached"]} Code: 429'
+      );
+    });
 });
