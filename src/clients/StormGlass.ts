@@ -1,6 +1,6 @@
 import { AxiosStatic } from 'axios';
 import { InternalError } from '@src/utils/errors/internal-error';
-
+import config, { IConfig } from 'config';
 export interface IStormGlassPointSource {
   noaa: number;
 }
@@ -44,6 +44,10 @@ export class StormGlassResponseError extends InternalError {
   }
 }
 
+const stormGlassResourceConfig: IConfig = config.get(
+  'App.resources.StormGlass'
+);
+
 export class StormGlass {
   readonly stormGlassAPIParams =
     'swellDirection,swellHeight,swellPeriod,waveDirection,waveHeight,windDirection,windSpeed';
@@ -57,10 +61,14 @@ export class StormGlass {
   ): Promise<IForecastPoint[]> {
     try {
       const response = await this.request.get<IStormGlassForecastResponse>(
-        `https://api.stormglass.io/v2/weather/point?lat=${lat}&lng=${lng}&params=${this.stormGlassAPIParams}&source=${this.stormGlassAPISource}`,
+        `${stormGlassResourceConfig.get(
+          'apiUrl'
+        )}/weather/point?lat=${lat}&lng=${lng}&params=${
+          this.stormGlassAPIParams
+        }&source=${this.stormGlassAPISource}`,
         {
           headers: {
-            Authorization: 'fake-token',
+            Authorization: `${stormGlassResourceConfig.get('apiToken')}`,
           },
         }
       );
