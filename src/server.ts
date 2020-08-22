@@ -35,6 +35,12 @@ export class Server extends OvernightServer {
     await database.close();
   }
 
+  public async start(): Promise<void> {
+    this.app.listen(this.port, () => {
+      console.log(`Server listening of port: ${this.port}`);
+    });
+  }
+
   public getApp(): Application {
     return this.app;
   }
