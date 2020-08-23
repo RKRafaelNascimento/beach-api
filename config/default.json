@@ -1,5 +1,9 @@
 {
     "App": {
+        "auth": {
+            "key": "Key-some",
+            "tokenExpiresIn": "200000"
+        },
         "database": {
             "mongoUrl": "mongodb://localhost:27017/surf-forecast"
         },

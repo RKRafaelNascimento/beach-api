@@ -55,4 +55,47 @@ describe('Users functional tests', () => {
         });
       });
   });
+  describe('When authenticating a user', () => {
+    it('should generate a token for a valid user', async () => {
+      const newUser = {
+        name: 'John Token',
+        email: 'johnToken@token.com',
+        password: '123456',
+      };
+      await new User(newUser).save();
+
+      const response = await global.testRequest
+        .post('/user/authenticate')
+        .send({ email: newUser.email, password: newUser.password });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(
+        expect.objectContaining({ token: expect.any(String) })
+      );
+    });
+    it('should return UNAUTHORIZED if the user with the given email is not found', async () => {
+      const response = await global.testRequest
+        .post('/user/authenticate')
+        .send({ email: 'some-email@teste.com', password: '1234' });
+
+      expect(response.status).toBe(401);
+    });
+    it('should return ANAUTHORIZED if the user is found but the password does not match', async () => {
+      const newUser = {
+        name: 'John Token',
+        email: 'johnToken@token.com',
+        password: '1234',
+      };
+
+      const response = await global.testRequest
+        .post('/user/authenticate')
+        .send({ email: newUser.email, password: 'different password' });
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({
+        code: 401,
+        error: 'Password does not match!',
+      });
+    });
+  });
 });
