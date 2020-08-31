@@ -26,7 +26,7 @@ jobs:
           mongodb-version: ${{ matrix.mongodb-version }}
 
       - name: Install dependencies
-        run: npm --from-lock-file
+        run: npm i --from-lock-file
 
       - name: Run All Tests
         run: npm run test
