@@ -1,0 +1,45 @@
+name: Complete WorkFlow
+
+on: ['push']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+        mongodb-version: [4.2]
+      fail-fast: true
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: git fetch --prune --unshallow
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.1.0
+        with:
+          mongodb-version: ${{ matrix.mongodb-version }}
+
+      - name: Install dependencies
+        run: npm i --from-lock-file
+
+      - name: Run All Tests
+        run: npm run test
+
+      - shell: bash
+        if: github.ref == 'refs/heads/master'
+        name: Create SSH deployment key
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: ./scripts/deploy.sh
+
+      - name: Deployment
+        if: github.ref == 'refs/heads/master'
+        run: git remote add umbler ssh://git@kamino.deploy.umbler.com:9922/jg2p1vgk/waldemar-surf-forecast-com.git && git push umbler master
+        env:
+          CI: true
