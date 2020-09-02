@@ -6,6 +6,7 @@ import { Application } from 'express';
 import * as database from '@src/utils/database';
 import { BeachesController } from './controllers/beaches';
 import { UserController } from './controllers/Users';
+import logger from './logger';
 
 export class Server extends OvernightServer {
   constructor(private port = 3000) {
@@ -43,7 +44,7 @@ export class Server extends OvernightServer {
 
   public async start(): Promise<void> {
     this.app.listen(this.port, () => {
-      console.log(`Server listening of port: ${this.port}`);
+      logger.info(`Server listening of port: ${this.port}`);
     });
   }
 
