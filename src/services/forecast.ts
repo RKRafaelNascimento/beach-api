@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { StormGlass, IForecastPoint } from '@src/clients/StormGlass';
 import { InternalError } from '@src/utils/errors/internal-error';
 import { IBeach } from '@src/models/beach';
@@ -26,6 +27,15 @@ export class Forecast {
   public async processForecastForBeaches(
     beaches: IBeach[]
   ): Promise<ITimeForecast[]> {
+    const pointsWithCorrectSources = await this.calculateRating(beaches);
+    const timeForecast = this.mapForecastByTime(pointsWithCorrectSources);
+    return timeForecast.map((t) => ({
+      time: t.time,
+      forecast: _.orderBy(t.forecast, ['rating'], ['desc']),
+    }));
+  }
+
+  private async calculateRating(beaches: IBeach[]): Promise<IBeachForecast[]> {
     const pointsWithCorrectSources: IBeachForecast[] = [];
     logger.info(`Preparing the forecast for ${beaches} beaches`);
     try {
@@ -35,7 +45,7 @@ export class Forecast {
         const enrichedBeachData = this.enrichedBeachData(points, beach, rating);
         pointsWithCorrectSources.push(...enrichedBeachData);
       }
-      return this.mapForecastByTime(pointsWithCorrectSources);
+      return pointsWithCorrectSources;
     } catch (error) {
       logger.error(error);
       throw new ForecastProcessingInternalError(error.message);
