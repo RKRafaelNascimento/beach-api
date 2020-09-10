@@ -9,6 +9,10 @@ import * as database from '@src/utils/database';
 import { BeachesController } from './controllers/beaches';
 import { UserController } from './controllers/Users';
 import logger from './logger';
+import swaggerUi from 'swagger-ui-express'
+import apiSchema from './api-schema.json'
+import { OpenApiValidator } from 'express-openapi-validator'
+import { OpenAPIV3 } from 'express-openapi-validator/dist/framework/types'
 
 export class Server extends OvernightServer {
   constructor(private port = 3000) {
@@ -17,6 +21,7 @@ export class Server extends OvernightServer {
 
   public async init(): Promise<void> {
     this.setupExpress();
+    await this.docsSetup()
     this.setupControllers();
     await this.databaseSetup();
   }
@@ -36,6 +41,15 @@ export class Server extends OvernightServer {
       beachesController,
       usersController,
     ]);
+  }
+
+  private async docsSetup(): Promise<void>{
+    this.app.use('/docs', swaggerUi.serve, swaggerUi.setup(apiSchema));
+    await new OpenApiValidator({
+      apiSpec: apiSchema as OpenAPIV3.Document,
+      validateRequests: true,
+      validateResponses: true
+    }).install(this.app)
   }
 
   private async databaseSetup(): Promise<void> {
