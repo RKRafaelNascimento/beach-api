@@ -9,10 +9,11 @@ import * as database from '@src/utils/database';
 import { BeachesController } from './controllers/beaches';
 import { UserController } from './controllers/Users';
 import logger from './logger';
-import swaggerUi from 'swagger-ui-express'
-import apiSchema from './api-schema.json'
-import { OpenApiValidator } from 'express-openapi-validator'
-import { OpenAPIV3 } from 'express-openapi-validator/dist/framework/types'
+import swaggerUi from 'swagger-ui-express';
+import apiSchema from './api-schema.json';
+import { OpenApiValidator } from 'express-openapi-validator';
+import { OpenAPIV3 } from 'express-openapi-validator/dist/framework/types';
+import { apiErrorValidator } from './middlewares/api-error-validator';
 
 export class Server extends OvernightServer {
   constructor(private port = 3000) {
@@ -21,15 +22,20 @@ export class Server extends OvernightServer {
 
   public async init(): Promise<void> {
     this.setupExpress();
-    await this.docsSetup()
+    await this.docsSetup();
     this.setupControllers();
     await this.databaseSetup();
+    this.setupErrorHandlers();
   }
 
   private setupExpress(): void {
     this.app.use(bodyParser.json());
     this.app.use(expressPinoLogger({ logger }));
     this.app.use(cors({ origin: '*' }));
+  }
+
+  private setupErrorHandlers(): void {
+    this.app.use(apiErrorValidator);
   }
 
   private setupControllers(): void {
@@ -43,13 +49,13 @@ export class Server extends OvernightServer {
     ]);
   }
 
-  private async docsSetup(): Promise<void>{
+  private async docsSetup(): Promise<void> {
     this.app.use('/docs', swaggerUi.serve, swaggerUi.setup(apiSchema));
     await new OpenApiValidator({
       apiSpec: apiSchema as OpenAPIV3.Document,
       validateRequests: true,
-      validateResponses: true
-    }).install(this.app)
+      validateResponses: true,
+    }).install(this.app);
   }
 
   private async databaseSetup(): Promise<void> {
