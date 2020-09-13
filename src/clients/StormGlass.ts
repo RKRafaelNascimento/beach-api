@@ -1,5 +1,6 @@
 import { InternalError } from '@src/utils/errors/internal-error';
 import * as HTTPUtils from '@src/utils/request';
+import { TimeUtil } from '@src/utils/time';
 import config, { IConfig } from 'config';
 export interface IStormGlassPointSource {
   noaa: number;
@@ -60,12 +61,14 @@ export class StormGlass {
     lng: number
   ): Promise<IForecastPoint[]> {
     try {
+      const endTimestamp = TimeUtil.getUnixTimeForFutureDay(1);
+
       const response = await this.request.get<IStormGlassForecastResponse>(
         `${stormGlassResourceConfig.get(
           'apiUrl'
         )}/weather/point?lat=${lat}&lng=${lng}&params=${
           this.stormGlassAPIParams
-        }&source=${this.stormGlassAPISource}`,
+        }&source=${this.stormGlassAPISource}&end=${endTimestamp}`,
         {
           headers: {
             Authorization: `${stormGlassResourceConfig.get('apiToken')}`,
